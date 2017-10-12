@@ -21,30 +21,33 @@ class Blockage(Problem):
         # Generate successors for each block
         # Blocks can move left or right and cannot traverse another block (blocks are solid)
         for block in blocks:
-            for i in range(block[1] - 1, block[1] + 2):
+            pos_x = block[0]
+            pos_y = block[1]
+            block = block[2]
+            for i in [pos_y - 1, pos_y + 1]: # iterate over left or right positions of the block
                 # If the block is on target
-                if state.grid[block[0]][i] != ' ':
+                if state.grid[pos_x][i] != ' ':
                     continue
                 new_grid = list(state.grid[:])
-                row = list(new_grid[block[0]])
-                row[i] = block[2]
+                row = list(new_grid[pos_x])
+                row[i] = block
                 # FIXME check whether we're on the goal XXX FIXME
-                row[block[1]] = ' '
+                row[pos_y] = ' '
                 # Add a comment
-                cost = block[1] - i
-                comment = '(' + str(block[0]) + ',' + str(block[1]) + ') ' + 'move to '
+                cost = pos_y - i
+                comment = '(' + str(pos_x) + ',' + str(pos_y) + ') ' + 'move to '
                 if cost > 0:
                     comment += 'left'
                 else: comment += 'right'
-                # comment += ' (' + block[2] + ')' # helper comment
-                new_grid[block[0]] = tuple(row)
+                # comment += ' (' + block + ')' # helper comment
+                new_grid[pos_x] = tuple(row)
                 # Transpose matrix to apply gravity
                 transposed_grid = list(map(list, zip(*new_grid)))
                 gravity_col = transposed_grid[i][:]
-                for j in range(block[0], len(gravity_col) - 1):
+                for j in range(pos_x, len(gravity_col) - 1):
                     # Fall until a '#' or another block is found
                     if gravity_col[j + 1] == ' ':
-                        gravity_col[j + 1] = block[2]
+                        gravity_col[j + 1] = block
                         gravity_col[j] = ' '
                     else: break
                 transposed_grid[i] = gravity_col
