@@ -22,12 +22,13 @@ class Blockage(Problem):
         # Blocks can move left or right and cannot traverse another block (blocks are solid)
         for block in blocks:
             for i in range(block[1] - 1, block[1] + 2):
-                if i == block[1] or state.grid[block[0]][i] == '#' or state.grid[block[0]][i].islower():
+                # If the block is on target
+                if state.grid[block[0]][i] != ' ':
                     continue
                 new_grid = list(state.grid[:])
                 row = list(new_grid[block[0]])
                 row[i] = block[2]
-                # FIXME check whether we're on the goal
+                # FIXME check whether we're on the goal XXX FIXME
                 row[block[1]] = ' '
                 # Add a comment
                 cost = block[1] - i
@@ -35,18 +36,17 @@ class Blockage(Problem):
                 if cost > 0:
                     comment += 'left'
                 else: comment += 'right'
-                # comment += ' (' + block[2] + ')'
+                # comment += ' (' + block[2] + ')' # helper comment
                 new_grid[block[0]] = tuple(row)
                 # Transpose matrix to apply gravity
                 transposed_grid = list(map(list, zip(*new_grid)))
                 gravity_col = transposed_grid[i][:]
                 for j in range(block[0], len(gravity_col) - 1):
-                    # FIXME goal blocks are solid too!
-                    # Fall until a # or another block is found
-                    if gravity_col[j+1] == '#' or gravity_col[j+1].islower(): break
-                    elif gravity_col[j + 1] == ' ':
+                    # Fall until a '#' or another block is found
+                    if gravity_col[j + 1] == ' ':
                         gravity_col[j + 1] = block[2]
                         gravity_col[j] = ' '
+                    else: break
                 transposed_grid[i] = gravity_col
                 gravity_applied_grid = list(map(list, zip(*transposed_grid)))
                 succ.append(('move', State(grid=tuple(gravity_applied_grid), comment=comment)))
