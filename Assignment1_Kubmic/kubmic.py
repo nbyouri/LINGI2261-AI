@@ -5,13 +5,23 @@ from collections import deque
 from copy import deepcopy
 import time
 
+
+counter = 0
 #################
 # Problem class #
 #################
 class Kubmic(Problem):
+
+    def __eq__(x,y):
+        return x.grid == y.grid
+
+    def __hash__(self):
+        return hash(str(self.grid))
+
     def successor(self, state):
         succ = list()
-
+        global counter
+        counter += 1
         # Row shifts
         for x in range(0, state.nbr):
             for i in range(1, state.nbc):
@@ -40,7 +50,8 @@ class Kubmic(Problem):
 
     def predecessor(self, state):
         succ = list()
-
+        global counter
+        counter += 1
         # Row shifts
         for x in range(0, state.nbr):
             for i in range(1, state.nbc):
@@ -202,38 +213,34 @@ def rotate(array, n):
 problem = Kubmic(init_state, goal_state)
 
 init_state.comment = "Init"
-# nbel = 0
-# print("\nHORIZ\n")
-# for (act,node) in problem.successor(init_state):
-# 	if nbel == 12:
-# 		print("\nVERT\n")
-# 	print(node,'\n')
-# 	nbel += 1
-#
-# print(nbel)
-# print(init_state)
+
+## Search Algorithm argument
+algo = sys.argv[2]
+print("Instance " + str(sys.argv[1]) + ", Algorithm: " + str(sys.argv[2]) + "\n")
 start_time = time.time()
-#path = iterative_deepening_search(problem)
-'''
-path = breadth_first_tree_search(problem).path()
-path.reverse()
-How to launch bfs, dfs ...
-'''
-path = bidirectional_breadth_first_tree_search(problem)
+if algo == "breadth_first_tree_search":
+    path = breadth_first_tree_search(problem).path()
+    path.reverse()
+elif algo == "breadth_first_graph_search":
+    path = breadth_first_graph_search(problem).path()
+    path.reverse()
+elif algo == "depth_first_tree_search":
+    path = depth_first_tree_search(problem).path()
+    path.reverse()
+elif algo == "depth_first_graph_search":
+    path = depth_first_graph_search(problem).path()
+    path.reverse()
+elif algo == "iterative_deepening_search":
+    path = iterative_deepening_search(problem).path()
+    path.reverse()
+else: path = bidirectional_breadth_first_tree_search(problem)
 end_time = time.time()
+
 
 def comments(comm):
     return '\033[1;36;40m' + comm + '\033[0m'
 
-#print('Number of moves: ' + str(node.depth))
-for n in path:
-    print(comments('\u2193 ' + n.state.comment))	# assuming the comment attribute of state contains a relevant string (e.g. describing the current move)
-    print(n.state,'\n') #assuming that the __str__ function of state outputs the correct format
-
-#path = node_ext_bottom.path()
-
-#for n in path[:-1]:
-#    print(comments('\u2193 ' + n.state.comment))	# assuming the comment attribute of state contains a relevant string (e.g. describing the current move)
-#    print(n.parent.state,'\n') #assuming that the __str__ function of state outputs the correct format
-
-print("Took %.2f seconds" % (end_time - start_time))
+print('Number of moves: ' + str(len(path) - 1))
+print("Nodes visited: " + str(counter + 1))
+print("Finished in %.2f seconds" % (end_time - start_time))
+print("\n\n")
