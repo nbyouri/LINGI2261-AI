@@ -1,4 +1,5 @@
 '''NAMES OF THE AUTHOR(S): Michael Saint-Guillain <michael.sait@uclouvain.be>, Francois Aubry'''
+''' Team 02 : Youri Mouton, Antoine Rime '''
 
 from search import *
 from collections import deque
@@ -82,6 +83,8 @@ class Kubmic(Problem):
         return state.grid == self.goal.grid
 
     def check_test(self, node_ext, explored):
+        '''Check if the node exist in the hashmap "explored". If it's the case it means that a path
+            between the initial and the goal state has been found '''
         try:
             return (node_ext, explored.pop(tuple(map(tuple, node_ext.state.grid))))
         except KeyError:
@@ -144,12 +147,16 @@ def readInstanceFile(filename):
 # Bidirectional Search #
 ########################
 def bidirectional_add_hashmap(node_ext, explored):
+    ''' Add the node in the hasmap unless there is already a node corresponding to the grid '''
     if not explored.__contains__(tuple(map(tuple, node_ext.state.grid))):
         explored[tuple(map(tuple, node_ext.state.grid))] = node_ext
 
 #def bidirectional_tree_check_depth(problem, explored_top, explored_bottom, fringe_top, fringe_bottom, ret):
 #	depth = ret[0].depth + ret[1]
 def concat_node(tuple):
+    ''' Concatenate the path from the top tree and the bottom tree to have the full path between
+        the inital and goal state
+        Also shift the comment for the bottom path to correspond with the right action '''
     (node_top, node_bottom) = tuple
     path_top = node_top.path()
     path_bottom = node_bottom.path()
@@ -159,7 +166,11 @@ def concat_node(tuple):
         n.parent.state.comment = n.state.comment
     return(path_top + path_bottom[1:])
 def bidirectional_tree_search(problem, fringe_top, fringe_bottom):
-
+    ''' Main algorithm for the bidirection search.
+            -the algorithm use two bfs to do the search on both tree
+            -explored node are stocked in an hashmap
+            -The algorithm always go through the entire level of a tree before accessing the other one 
+    '''
     fringe_top.append(Node_ext(problem.initial))
     fringe_bottom.append(Node_ext(problem.goal))
     explored_top, explored_bottom = dict(), dict()
