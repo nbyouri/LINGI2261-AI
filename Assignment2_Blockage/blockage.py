@@ -13,10 +13,10 @@ class Blockage(Problem):
         succ = list()
         blocks = list()
         # Find blocks
-        for x in range(1, state.nbr):
-            for y in range(1, state.nbc):
-                if state.grid[x][y].islower():
-                    blocks.append((x,y, state.grid[x][y]))
+        for x,row in enumerate(state.grid):
+            for y,item in enumerate(row):
+                if item.islower():
+                    blocks.append((x,y,item))
         # Generate successors for each block
         # Blocks can move left or right and cannot traverse another block (blocks are solid)
         for pos_x,pos_y,block in blocks:
@@ -32,25 +32,20 @@ class Blockage(Problem):
 
                 # Add a comment
                 cost = pos_y - i
-                comment = '(' + str(pos_x) + ',' + str(pos_y) + ') ' + 'move to '
-                if cost > 0:
-                    comment += 'left'
-                else: comment += 'right'
+                comment = ''.join(['(', str(pos_x), ',', str(pos_y), ') ', 'move to ', 'left' if cost > 0 else 'right'])
 
                 new_grid[pos_x] = tuple(row)
                 # Transpose matrix to apply gravity
                 transposed_grid = list(map(list, zip(*new_grid)))
                 gravity_col = transposed_grid[i][:]
                 for j in range(pos_x, state.nbr - 1):
-                    # Fall through ' ', targets until '#' or '@' or block is found
-                    # FIXME collisions with other blocks
                     if gravity_col[j + 1] == ' ':
                         gravity_col[j + 1] = block
                         gravity_col[j] = ' '
                     elif gravity_col[j + 1].isupper():
                         gravity_col[j + 1] = block
                         gravity_col[j] = gravity_col[j + 1]
-                    else:
+                    else: # stop at '@', '#' or block
                         break
                 # If we're on target, change the block to a '@'
                 if self.goal.grid[j][i].lower() == block:
@@ -58,28 +53,33 @@ class Blockage(Problem):
 
                 transposed_grid[i] = gravity_col
                 gravity_applied_grid = list(map(list, zip(*transposed_grid)))
-                succ.append(('move', State(grid=tuple(gravity_applied_grid), comment=comment)))
+                # print(State(tuple(gravity_applied_grid), comment=comment))
+                succ.append(('move', State(tuple(gravity_applied_grid), comment=comment)))
 
         for s in succ:
             yield s
 
     def goal_test(self, state):
-        # We run A* until no blocks are not on target
-        # FIXME not all blocks have targets, see problem a02
-        blocks_remaining = False
+        # We run A* until targets are attained in goal
+        # that is, if there are as many '@' in the current state
+        # as there are upper case letters in the goal
+        nb_a = 0
+        nb_A = 0
         for row in state.grid:
-            if any(char.islower() for char in row):
-                blocks_remaining = True
-        return not blocks_remaining
+            nb_a += row.count('@')
+        for row in self.goal.grid:
+            nb_A += sum(1 for c in row if c.isupper())
+        return nb_a == nb_A
 
     #########################################
     # Manhattan distance Heuristic function #
     #########################################
-    def heuristic(self, n):
+    def manhattan_heuristic(self, n):
         h = 0.0
         # ...
         # compute an heuristic value
         # ...
+        # compare target of n to the goal grid??
         return h
 
 ###############
@@ -168,7 +168,7 @@ print('------------')
 
 init_state.comment = 'Init'
 
-node = astar_graph_search(problem, problem.heuristic)
+node = astar_graph_search(problem, problem.manhattan_heuristic)
 
 # # Example of print
 path = node.path()
