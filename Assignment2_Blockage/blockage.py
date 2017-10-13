@@ -135,25 +135,11 @@ def readInstanceFile(filename):
     return grid
 
 
-#
-# ######################
-# # Heuristic function #
-# ######################
-# def heuristic(n):
-#     h = 0.0
-#     # ...
-#     # compute an heuristic value
-#     # ...
-#     return h
-
-
-
 #####################
 # Launch the search #
 #####################
 grid_init = readInstanceFile(sys.argv[1])
 grid_goal = readInstanceFile(sys.argv[2])
-heuristic = sys.argv[3]
 
 init_state = State(grid_init)
 goal_state = State(grid_goal)
@@ -169,7 +155,12 @@ print('------------')
 
 init_state.comment = 'Init'
 
-if heuristic == "manhattan":
+if len(sys.argv) > 3:
+    heuristic = sys.argv[3]
+    if heuristic == "manhattan":
+        h = problem.manhattan_heuristic
+    else: h = problem.manhattan_heuristic
+else:
     h = problem.manhattan_heuristic
 
 start = time.time()
@@ -187,4 +178,5 @@ for n in path:
     print(n.state) 		# assuming that the __str__ function of states output the correct format
     print()
 
-print('A* with the %s heuristic took %.2f seconds' % (heuristic, end - start))
+if len(sys.argv) > 3:
+    print('A* with the %s heuristic took %.2f seconds' % (sys.argv[3], end - start))
