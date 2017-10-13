@@ -12,49 +12,50 @@ class Blockage(Problem):
     def successor(self, state):
         succ = list()
         blocks = list()
-        # Find blocks FIXME optimize with enumerate
-        for x in range(1, len(state.grid)):  # FIXME use nbr
-            for y in range(1, len(state.grid[x])): # FIXME use nbc
+        # Find blocks
+        for x in range(1, state.nbr):
+            for y in range(1, state.nbc):
                 if state.grid[x][y].islower():
                     blocks.append((x,y, state.grid[x][y]))
-                # FIXME check if already in goal position
         # Generate successors for each block
         # Blocks can move left or right and cannot traverse another block (blocks are solid)
         for pos_x,pos_y,block in blocks:
             for i in [pos_y - 1, pos_y + 1]: # iterate over left or right position of the block
                 # If the block is on target
-                if state.grid[pos_x][i] != ' ' or state.grid[pos_x][i].isupper():
+                if state.grid[pos_x][i] != ' ':
                     continue
+
                 new_grid = list(state.grid[:])
                 row = list(new_grid[pos_x])
-                # Replace with '@' if the block is on target
-                if self.goal.grid[pos_x][pos_y].isupper(): # FIXME does not work
-                    row[i] = '@'
-                else:
-                    row[i] = block
+                row[i] = block
                 row[pos_y] = ' '
+
                 # Add a comment
                 cost = pos_y - i
                 comment = '(' + str(pos_x) + ',' + str(pos_y) + ') ' + 'move to '
                 if cost > 0:
                     comment += 'left'
                 else: comment += 'right'
-                # comment += ' (' + block + ')' # helper comment
+
                 new_grid[pos_x] = tuple(row)
                 # Transpose matrix to apply gravity
                 transposed_grid = list(map(list, zip(*new_grid)))
                 gravity_col = transposed_grid[i][:]
-                for j in range(pos_x, len(gravity_col) - 1): # FIXME use nbc
-                    # Fall until a '#' or another block is found
+                for j in range(pos_x, state.nbr - 1):
+                    # Fall through ' ', targets until '#' or '@' or block is found
+                    # FIXME collisions with other blocks
                     if gravity_col[j + 1] == ' ':
                         gravity_col[j + 1] = block
                         gravity_col[j] = ' '
-                    # If we're on target, change the block to a '@'
-                    elif self.goal.grid[pos_x][j + 1].lower() == block: # FIXME does not work
-                        gravity_col[j + 1] = '@'
-                        gravity_col[j] = ' '
-                    # FIXME fall through a block target
-                    else: break
+                    elif gravity_col[j + 1].isupper():
+                        gravity_col[j + 1] = block
+                        gravity_col[j] = gravity_col[j + 1]
+                    else:
+                        break
+                # If we're on target, change the block to a '@'
+                if self.goal.grid[j][i].lower() == block:
+                    gravity_col[j] = '@'
+
                 transposed_grid[i] = gravity_col
                 gravity_applied_grid = list(map(list, zip(*transposed_grid)))
                 succ.append(('move', State(grid=tuple(gravity_applied_grid), comment=comment)))
@@ -64,10 +65,22 @@ class Blockage(Problem):
 
     def goal_test(self, state):
         # We run A* until no blocks are not on target
+        # FIXME not all blocks have targets, see problem a02
         blocks_remaining = False
         for row in state.grid:
-            blocks_remaining = any(char.islower() for char in row)
-        return blocks_remaining
+            if any(char.islower() for char in row):
+                blocks_remaining = True
+        return not blocks_remaining
+
+    #########################################
+    # Manhattan distance Heuristic function #
+    #########################################
+    def heuristic(self, n):
+        h = 0.0
+        # ...
+        # compute an heuristic value
+        # ...
+        return h
 
 ###############
 # State class #
@@ -80,8 +93,8 @@ class State:
         self.comment   = comment
 
     def __str__(self):
-        # s = '' + '\033[1;36;40m' + '\u2193 ' + self.comment + '\033[0m' + '\n'
-        s = ''
+        s = '' + '\033[1;36;40m' + '\u2193 ' + self.comment + '\033[0m' + '\n'
+        #s = ''
         for i in range(0, self.nbr):
             for j in range(0, self.nbc):
                 s = s + str(self.grid[i][j])
@@ -122,16 +135,16 @@ def readInstanceFile(filename):
     return grid
 
 
-
-###################### 
-# Heuristic function #
-######################
-def heuristic(n):
-    h = 0.0
-    # ...
-    # compute an heuristic value
-    # ...
-    return h
+#
+# ######################
+# # Heuristic function #
+# ######################
+# def heuristic(n):
+#     h = 0.0
+#     # ...
+#     # compute an heuristic value
+#     # ...
+#     return h
 
 
 
@@ -153,17 +166,17 @@ print('Goal grid')
 print(goal_state)
 print('------------')
 
-node = astar_graph_search(problem, heuristic)
+init_state.comment = 'Init'
 
-# Example of print
+node = astar_graph_search(problem, problem.heuristic)
+
+# # Example of print
 path = node.path()
 path.reverse()
 
-#
+
 print('Number of moves: ' + str(node.depth))
 for n in path:
-    print(n.action)		# a comment line
+    # print(n.action)		# a comment line
     print(n.state) 		# assuming that the __str__ function of states output the correct format
     print()
-
-
