@@ -4,7 +4,7 @@ import sys
 import math
 from search import *
 
-#################  
+#################
 # Problem class #
 #################
 class Blockage(Problem):
@@ -76,10 +76,30 @@ class Blockage(Problem):
     #########################################
     def manhattan_heuristic(self, n):
         h = 0.0
-        # ...
-        # compute an heuristic value
-        # ...
-        # compare target of n to the goal grid??
+        blocks = list()
+        goal_blocks = list()
+        state = n.state
+        #Search blocks
+        for x,row in enumerate(state.grid):
+            for y,item in enumerate(row):
+                if item.islower():
+                    blocks.append((x,y,item))
+        #Search goal blocks
+        for x,row in enumerate(state.grid):
+            for y,item in enumerate(row):
+                if item.isupper():
+                    goal_blocks.append((x,y,item))
+        for x,y,item in blocks:
+            dist = list()
+            for x_g,y_g,item_g in goal_blocks:
+                if item == item_g.lower():
+                    dist.append(fabs(x - x_g))
+            if dist:
+                h += max(dist)
+        return h
+
+    def zero_heuristic(self, n):
+        h = 0.0
         return h
 
 ###############
@@ -123,7 +143,7 @@ class State:
         return hash(self.grid)
 
 
-####################### 
+#######################
 # Auxiliary functions #
 #######################
 def readInstanceFile(filename):
@@ -159,6 +179,8 @@ if len(sys.argv) > 3:
     heuristic = sys.argv[3]
     if heuristic == "manhattan":
         h = problem.manhattan_heuristic
+    elif heuristic == "zero":
+        h = problem.zero_heuristic
     else: h = problem.manhattan_heuristic
 else:
     h = problem.manhattan_heuristic
