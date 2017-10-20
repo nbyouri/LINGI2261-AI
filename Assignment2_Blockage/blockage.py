@@ -85,9 +85,9 @@ class Blockage(Problem):
             if ans:
                 return ans
             for x_g,y_g,item_g in goal_blocks:
-                if(item == item_g.lower() and y < y_g):
+                if(item == item_g.lower() and x > x_g):
                     ans = True
-                elif(item == item_g.lower() and y >= y_g):
+                elif(item == item_g.lower() and x <= x_g):
                     ans = False
                     break
         return ans
@@ -113,7 +113,7 @@ class Blockage(Problem):
             dist = list()
             for x_g,y_g,item_g in goal_blocks:
                 if item == item_g.lower():
-                    dist.append(math.fabs(x - x_g))
+                    dist.append(math.fabs(y - y_g) + math.fabs(x - x_g)) #Change here to just compare horizontal distance to be optimal
             if dist:
                 h += max(dist)
         return h
@@ -210,16 +210,20 @@ start = time.time()
 node = astar_graph_search(problem, h)
 end = time.time()
 
-# Example of print
-path = node.path()
-path.reverse()
+
+if node:
+    # Example of print
+    path = node.path()
+    path.reverse()
 
 
-print('Number of moves: ' + str(node.depth))
-for n in path:
-    # print(n.action)		# a comment line
-    print(n.state) 		# assuming that the __str__ function of states output the correct format
-    print()
+    print('Number of moves: ' + str(node.depth))
+    for n in path:
+        # print(n.action)		# a comment line
+        print(n.state) 		# assuming that the __str__ function of states output the correct format
+        print()
 
-if len(sys.argv) > 3:
-    print('A* with the %s heuristic took %.2f seconds' % (sys.argv[3], end - start))
+    if len(sys.argv) > 3:
+        print('A* with the %s heuristic took %.2f seconds' % (sys.argv[3], end - start))
+else:
+    print("No solution found")
