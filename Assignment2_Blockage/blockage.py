@@ -12,11 +12,19 @@ class Blockage(Problem):
     def successor(self, state):
         succ = list()
         blocks = list()
+        goal_blocks = list()
         # Find blocks
         for x,row in enumerate(state.grid):
             for y,item in enumerate(row):
                 if item.islower():
                     blocks.append((x,y,item))
+        #Search goal blocks
+        for x,row in enumerate(self.goal.grid):
+            for y,item in enumerate(row):
+                if item.isupper():
+                    goal_blocks.append((x,y,item))
+        #if self.is_dead(blocks, goal_blocks):
+        #    return succ
         # Generate successors for each block
         # Blocks can move left or right and cannot traverse another block (blocks are solid)
         for pos_x,pos_y,block in blocks:
@@ -71,6 +79,18 @@ class Blockage(Problem):
             nb_A += sum(1 for c in row if c.isupper())
         return nb_a == nb_A
 
+    def is_dead(self, blocks, goal_blocks):
+        ans = False
+        for x,y,item in blocks:
+            if ans:
+                return ans
+            for x_g,y_g,item_g in goal_blocks:
+                if(item == item_g.lower() and y < y_g):
+                    ans = True
+                elif(item == item_g.lower() and y >= y_g):
+                    ans = False
+                    break
+        return ans
     #########################################
     # Manhattan distance Heuristic function #
     #########################################
@@ -85,7 +105,7 @@ class Blockage(Problem):
                 if item.islower():
                     blocks.append((x,y,item))
         #Search goal blocks
-        for x,row in enumerate(state.grid):
+        for x,row in enumerate(self.goal.grid):
             for y,item in enumerate(row):
                 if item.isupper():
                     goal_blocks.append((x,y,item))
@@ -93,7 +113,7 @@ class Blockage(Problem):
             dist = list()
             for x_g,y_g,item_g in goal_blocks:
                 if item == item_g.lower():
-                    dist.append(fabs(x - x_g))
+                    dist.append(math.fabs(x - x_g))
             if dist:
                 h += max(dist)
         return h
@@ -111,6 +131,7 @@ class State:
         self.nbc       = len(grid[0])
         self.grid 	   = tuple([ tuple(grid[i]) for i in range(0,self.nbr) ])		# self.grid must be immutable (because of __hash__)
         self.comment   = comment
+        self.dead = False   #Set to True if the game is in a not winnable state
 
     def __str__(self):
         s = '' + '\033[1;36;40m' + '\u2193 ' + self.comment + '\033[0m' + '\n'
