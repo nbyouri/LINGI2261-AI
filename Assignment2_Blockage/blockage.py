@@ -64,8 +64,6 @@ class Blockage(Problem):
         for s in succ:
             yield s
 
-    def gravity():
-
     def goal_test(self, state):
         # We run A* until targets are attained in goal
         # that is, if there are as many '@' in the current state
