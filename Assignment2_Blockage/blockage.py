@@ -50,9 +50,6 @@ class Blockage(Problem):
                     if gravity_col[j + 1] == ' ':
                         gravity_col[j + 1] = block
                         gravity_col[j] = ' '
-                    elif gravity_col[j + 1].isupper():
-                        gravity_col[j + 1] = block
-                        gravity_col[j] = gravity_col[j + 1]
                     else: # stop at '@', '#' or block
                         break
                 # If we're on target, change the block to a '@'
@@ -66,6 +63,8 @@ class Blockage(Problem):
 
         for s in succ:
             yield s
+
+    def gravity():
 
     def goal_test(self, state):
         # We run A* until targets are attained in goal
@@ -85,7 +84,7 @@ class Blockage(Problem):
             if ans:
                 return ans
             for x_g,y_g,item_g in goal_blocks:
-                if(item == item_g.lower() and x > x_g):
+                if(item == item_g.lower() and x > x_g): #With x the vertical distance
                     ans = True
                 elif(item == item_g.lower() and x <= x_g):
                     ans = False
@@ -187,12 +186,12 @@ goal_state = State(grid_goal)
 
 problem = Blockage(init_state, goal_state)
 
-print('Initial grid')
-print(init_state)
-print('------------')
-print('Goal grid')
-print(goal_state)
-print('------------')
+#print('Initial grid')
+#print(init_state)
+#print('------------')
+#print('Goal grid')
+#print(goal_state)
+#print('------------')
 
 init_state.comment = 'Init'
 
@@ -206,9 +205,9 @@ if len(sys.argv) > 3:
 else:
     h = problem.manhattan_heuristic
 
-start = time.time()
+#start = time.time()
 node = astar_graph_search(problem, h)
-end = time.time()
+#end = time.time()
 
 
 if node:
@@ -217,13 +216,13 @@ if node:
     path.reverse()
 
 
-    print('Number of moves: ' + str(node.depth))
+#    print('Number of moves: ' + str(node.depth))
     for n in path:
         # print(n.action)		# a comment line
         print(n.state) 		# assuming that the __str__ function of states output the correct format
         print()
 
-    if len(sys.argv) > 3:
-        print('A* with the %s heuristic took %.2f seconds' % (sys.argv[3], end - start))
+    #if len(sys.argv) > 3:
+    #    print('A* with the %s heuristic took %.2f seconds' % (sys.argv[3], end - start))
 else:
     print("No solution found")
