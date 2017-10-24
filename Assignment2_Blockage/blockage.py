@@ -9,6 +9,28 @@ from search import *
 #################
 class Blockage(Problem):
 
+    def gravity(self, state, new_grid):
+        transposed_grid = list(map(list, zip(*new_grid)))
+        blocks = list()
+        for x,row in enumerate(new_grid):
+            for y,item in enumerate(row):
+                if item.islower():
+                    blocks.append((x,y,item))
+        for pos_x,pos_y,block in blocks:
+            # Transpose matrix to apply gravity
+            gravity_col = transposed_grid[pos_y][:]
+            for j in range(pos_x, state.nbr - 1):
+                if gravity_col[j + 1] == ' ':
+                    gravity_col[j + 1] = block
+                    gravity_col[j] = ' '
+                else: # stop at '@', '#' or block
+                    break
+            # If we're on target, change the block to a '@'
+            if self.goal.grid[j][pos_y].lower() == block:
+                gravity_col[j] = '@'
+            transposed_grid[pos_y] = gravity_col
+        return list(map(list, zip(*transposed_grid)))
+
     def successor(self, state):
         succ = list()
         blocks = list()
@@ -37,28 +59,14 @@ class Blockage(Problem):
                 row = list(new_grid[pos_x])
                 row[i] = block
                 row[pos_y] = ' '
+                new_grid[pos_x] = tuple(row)
 
                 # Add a comment
                 cost = pos_y - i
                 comment = ''.join(['(', str(pos_x), ',', str(pos_y), ') ', 'move to ', 'left' if cost > 0 else 'right'])
 
-                new_grid[pos_x] = tuple(row)
-                # Transpose matrix to apply gravity
-                transposed_grid = list(map(list, zip(*new_grid)))
-                gravity_col = transposed_grid[i][:]
-                for j in range(pos_x, state.nbr - 1):
-                    if gravity_col[j + 1] == ' ':
-                        gravity_col[j + 1] = block
-                        gravity_col[j] = ' '
-                    else: # stop at '@', '#' or block
-                        break
-                # If we're on target, change the block to a '@'
-                if self.goal.grid[j][i].lower() == block:
-                    gravity_col[j] = '@'
-
-                transposed_grid[i] = gravity_col
-                gravity_applied_grid = list(map(list, zip(*transposed_grid)))
-                # print(State(tuple(gravity_applied_grid), comment=comment))
+                gravity_applied_grid = self.gravity(state, new_grid)
+                #print(State(tuple(gravity_applied_grid), comment=comment))
                 succ.append(('move', State(tuple(gravity_applied_grid), comment=comment)))
 
         for s in succ:
