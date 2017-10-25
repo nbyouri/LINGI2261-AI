@@ -12,6 +12,7 @@ class Blockage(Problem):
     def gravity(self, state, new_grid):
         transposed_grid = list(map(list, zip(*new_grid)))
         blocks = list()
+        block_moved = False
         for x,row in enumerate(new_grid):
             for y,item in enumerate(row):
                 if item.islower():
@@ -23,12 +24,15 @@ class Blockage(Problem):
                 if gravity_col[j + 1] == ' ':
                     gravity_col[j + 1] = block
                     gravity_col[j] = ' '
+                    block_moved = True
                 else: # stop at '@', '#' or block
                     break
             # If we're on target, change the block to a '@'
             if self.goal.grid[j][pos_y].lower() == block:
                 gravity_col[j] = '@'
             transposed_grid[pos_y] = gravity_col
+            if block_moved:
+                return self.gravity(state, list(map(list, zip(*transposed_grid))))
         return list(map(list, zip(*transposed_grid)))
 
     def successor(self, state):
