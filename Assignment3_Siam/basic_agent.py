@@ -38,35 +38,42 @@ class MyAgent(AlphaBetaAgent):
         """The cutoff function returns true if the alpha-beta/minimax
         search has to stop; false otherwise.
         """
-        # TODO what val for depth ?
-        return depth > 1 or state.game_over()
+        return state.game_over() or depth >= 1
 
     def evaluate(self, state):
         """The evaluate function must return an integer value
         representing the utility function of the board.
         """
-        evaluate = val(state, state.get_cur_player())
-        state.go_to_next_player()
-        evaluate -= val(state, state.get_cur_player())
-        state.go_to_next_player()
-        return evaluate
+        return static_evaluate(self, state)
 
 
-def val(state, player):
+def static_evaluate(self, state):
     """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
             controlled by player where p,f are the position and the exit direction
             for each rock controlled by player"""
     val = 0
-    controlled_rocks = rocks(state, player)
-    for (y, x), f in controlled_rocks:
+    controlled_rocks_me = rocks(state, self.id)
+    controlled_rocks_other = rocks(state, 1 - self.id)
+    for (x, y), f in controlled_rocks_me:
         if f == UP:
-            val += (5 - y + 1)
-        elif f == DOWN:
-            val += (5 - (5 - y))
-        elif f == RIGHT:
-            val += (5 - (5 - x))
+            dst = x + 1
         elif f == LEFT:
-            val += (5 - x + 1)
-        else:
-            raise ValueError("Wrong value given by rocks: %s", f)
+            dst = y + 1
+        elif f == DOWN:
+            dst = 5 - x
+        elif f == RIGHT:
+            dst = 5 - y
+        val += 5 - dst
+
+    for (x, y), f in controlled_rocks_other:
+        if f == UP:
+            dst = x + 1
+        elif f == LEFT:
+            dst = y + 1
+        elif f == DOWN:
+            dst = 5 - x
+        elif f == RIGHT:
+            dst = 5 - y
+        val -= 5 - dst
+
     return val
