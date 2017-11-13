@@ -44,36 +44,25 @@ class MyAgent(AlphaBetaAgent):
         """The evaluate function must return an integer value
         representing the utility function of the board.
         """
-        return static_evaluate(self, state)
+        return static_evaluate(self.id, state) - static_evaluate(self.id - 1, state)
 
 
-def static_evaluate(self, state):
+def static_evaluate(id, state):
     """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
             controlled by player where p,f are the position and the exit direction
             for each rock controlled by player"""
     val = 0
-    controlled_rocks_me = rocks(state, self.id)
-    controlled_rocks_other = rocks(state, 1 - self.id)
-    for (x, y), f in controlled_rocks_me:
+    controlled_rocks = rocks(state, id)
+    for (x, y), f in controlled_rocks:
         if f == UP:
             dst = x + 1
         elif f == LEFT:
             dst = y + 1
         elif f == DOWN:
-            dst = 5 - x
+            dst = SIZE - x
         elif f == RIGHT:
-            dst = 5 - y
-        val += 5 - dst
-
-    for (x, y), f in controlled_rocks_other:
-        if f == UP:
-            dst = x + 1
-        elif f == LEFT:
-            dst = y + 1
-        elif f == DOWN:
-            dst = 5 - x
-        elif f == RIGHT:
-            dst = 5 - y
-        val -= 5 - dst
-
+            dst = SIZE - y
+        else:
+            raise ValueError("Wrong face value %s", f)
+        val += SIZE - dst
     return val
