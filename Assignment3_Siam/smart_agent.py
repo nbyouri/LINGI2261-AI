@@ -11,6 +11,8 @@ Agent skeleton. Fill in the gaps.
 
 class MyAgent(AlphaBetaAgent):
     """This is the skeleton of an agent to play the game."""
+    move_nbr = 0
+    current_depth = 0
 
     def revert_previous_action(self, action):
         last_move, move = self.last_action[0], action[0]
@@ -39,6 +41,7 @@ class MyAgent(AlphaBetaAgent):
         It must return an action representing the move the player
         will perform.
         """
+        self.move_nbr += 1
         self.last_action = last_action
         return minimax.search(state, self)
 
@@ -50,8 +53,6 @@ class MyAgent(AlphaBetaAgent):
         actions = state.get_current_player_actions()
         successors = list()
         for action in actions:
-            print("last_action", self.last_action[0])
-            print("action", action[0])
             if state.is_action_valid(action) and self.revert_previous_action(action):
                 new_state = state.copy()
                 new_state.apply_action(action)
@@ -63,29 +64,57 @@ class MyAgent(AlphaBetaAgent):
         """The cutoff function returns true if the alpha-beta/minimax
         search has to stop; false otherwise.
         """
+        self.current_depth = depth
         return state.game_over() or depth >= 1
 
     def evaluate(self, state):
         """The evaluate function must return an integer value
         representing the utility function of the board.
         """
-        return static_evaluate(self.id, state) - static_evaluate(self.id - 1, state)
+        return self.evaluate_engine(self.id, state) - self.evaluate_engine(self.id - 1, state)
 
 
-def static_evaluate(id, state):
-    """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
-            controlled by player where p,f are the position and the exit direction
-            for each rock controlled by player"""
-    val = 0
-    controlled_rocks = rocks(state, id)
-    for (x, y), f in controlled_rocks:
-        if f == UP:
-            dst = x + 1
-        elif f == LEFT:
-            dst = y + 1
-        elif f == DOWN:
-            dst = SIZE - x
-        elif f == RIGHT:
-            dst = SIZE - y
-        val += SIZE - dst
-    return val
+    def evaluate_engine(self, id, state):
+        """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
+                controlled by player where p,f are the position and the exit direction
+                for each rock controlled by player"""
+        val = 0
+        compact_str = state.compact_str()
+        if id == 0:
+            player = [0,1,2,3]
+        else:
+            player = [4,5,6,7]
+
+        # TODO Condition only works with depth 1
+        if self.move_nbr == 1 and self.current_depth == 1:
+            pos = [1, 3, 23, 21]
+            for i in pos:
+                if player.contains(compact_str[i]):
+                    val += 999
+        if self.move_nbr == 2 and self.current_depth == 1:
+            pos = [1, 3, 23, 21]
+            pos_push = [6, 8, 18, 16]
+            for i, j in (pos, pos_push):
+                if player.contains(compact_str[i]) and player.contains(compact_str[j]):
+                    val += 999
+        if self.move_nbr == 3 and self.current_depth == 1:
+            pos = [10, 14]
+            for i in pos:
+                if player.contains(compact_str[i]):
+                    val += 999
+
+        controlled_rocks = rocks(state, id)
+        for (x, y), f in controlled_rocks:
+            if f == 0:
+                dst = x + 1
+            elif f == 1:
+                dst = y + 1
+            elif f == 2:
+                dst = SIZE - x
+            elif f == 3:
+                dst = SIZE - y
+            else:
+                raise ValueError("face= ", f, RIGHT)
+            val += SIZE - dst
+        return val
+
