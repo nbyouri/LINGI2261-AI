@@ -2,7 +2,6 @@ from agent import AlphaBetaAgent
 import minimax
 from state_tools_basic import rocks
 from constants import *
-from gui import *
 
 """
 Agent skeleton. Fill in the gaps.
@@ -13,6 +12,7 @@ class MyAgent(AlphaBetaAgent):
     """This is the skeleton of an agent to play the game."""
     move_nbr = 0
     current_depth = 0
+    last_action = []
 
     def revert_previous_action(self, action):
         last_move, move = self.last_action[0], action[0]
@@ -23,8 +23,8 @@ class MyAgent(AlphaBetaAgent):
             # Avoid reverting rotation
             if last_move == "face" and move == "face":
                 return last_cell != cell or last_face != face
-        except:
-            IndexError
+        except IndexError:
+            print("Index error")
 
         # Place and recover
         if last_move == "place" and move == "recover":
@@ -73,37 +73,36 @@ class MyAgent(AlphaBetaAgent):
         """
         return self.evaluate_engine(self.id, state) - self.evaluate_engine(self.id - 1, state)
 
-
-    def evaluate_engine(self, id, state):
+    def evaluate_engine(self, player_id, state):
         """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
                 controlled by player where p,f are the position and the exit direction
                 for each rock controlled by player"""
         val = 0
         compact_str = state.compact_str()
-        if id == 0:
-            player = [0,1,2,3]
+        if player_id == 0:
+            player = [0, 1, 2, 3]
         else:
-            player = [4,5,6,7]
+            player = [4, 5, 6, 7]
 
         # TODO Condition only works with depth 1
         if self.move_nbr == 1 and self.current_depth == 1:
             pos = [1, 3, 23, 21]
             for i in pos:
-                if player.contains(compact_str[i]):
+                if compact_str[i] in player:
                     val += 999
         if self.move_nbr == 2 and self.current_depth == 1:
             pos = [1, 3, 23, 21]
             pos_push = [6, 8, 18, 16]
             for i, j in (pos, pos_push):
-                if player.contains(compact_str[i]) and player.contains(compact_str[j]):
+                if compact_str[i] in player and compact_str[j] in player:
                     val += 999
         if self.move_nbr == 3 and self.current_depth == 1:
             pos = [10, 14]
             for i in pos:
-                if player.contains(compact_str[i]):
+                if compact_str[i] in player:
                     val += 999
 
-        controlled_rocks = rocks(state, id)
+        controlled_rocks = rocks(state, player_id)
         for (x, y), f in controlled_rocks:
             if f == 0:
                 dst = x + 1
@@ -117,4 +116,3 @@ class MyAgent(AlphaBetaAgent):
                 raise ValueError("face= ", f, RIGHT)
             val += SIZE - dst
         return val
-
