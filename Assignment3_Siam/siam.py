@@ -423,7 +423,7 @@ class SiamState(State):
         elif self.board[i][j] == PLAYER0:
           s += str(self.face[i][j])
         elif self.board[i][j] == PLAYER1:
-          s += str(self.face[i][j]) + 4
+          s += str(self.face[i][j]) + str(4)
         else:
           assert False
     return s

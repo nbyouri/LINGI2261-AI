@@ -61,7 +61,7 @@ class MyAgent(AlphaBetaAgent):
             yield s
 
     def cutoff(self, state, depth):
-        """The cutoff function returns true if the alpha-beta/minimax
+        """The cutoff function returns true if the alpha-beta/mini max
         search has to stop; false otherwise.
         """
         self.current_depth = depth
@@ -93,9 +93,10 @@ class MyAgent(AlphaBetaAgent):
         if self.move_nbr == 2 and self.current_depth == 1:
             pos = [1, 3, 23, 21]
             pos_push = [6, 8, 18, 16]
-            for i, j in (pos, pos_push):
-                if compact_str[i] in player and compact_str[j] in player:
+            for i in range(len(pos)):
+                if compact_str[pos[i]] in player and compact_str[pos_push[j]] in player:
                     val += 999
+
         if self.move_nbr == 3 and self.current_depth == 1:
             pos = [10, 14]
             for i in pos:
