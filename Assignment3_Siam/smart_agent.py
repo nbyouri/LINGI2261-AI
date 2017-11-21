@@ -10,30 +10,30 @@ Agent skeleton. Fill in the gaps.
 
 class MyAgent(AlphaBetaAgent):
     """This is the skeleton of an agent to play the game."""
-    move_nbr = 0
     current_depth = 0
-    last_action = []
+    last_action = None
 
     def revert_previous_action(self, action):
-        last_move, move = self.last_action[0], action[0]
-        last_cell, cell = self.last_action[1], action[1]
+        if self.last_action:
+            last_move, move = self.last_action[0], action[0]
+            last_cell, cell = self.last_action[1], action[1]
+            try:
+                last_face, face = self.last_action[2], action[2]
+                # Avoid reverting rotation
+                if last_move == "face" and move == "face":
+                    return last_cell != cell or last_face != face
+            except IndexError or TypeError:
+                pass
+            # Place and recover
+            if last_move == "place" and move == "recover":
+                return last_cell != cell
+            # Push and recover
+            if last_move == "place-push" and move == "recover":
+                return last_cell != cell
 
-        try:
-            last_face, face = self.last_action[2], action[2]
-            # Avoid reverting rotation
-            if last_move == "face" and move == "face":
-                return last_cell != cell or last_face != face
-        except IndexError:
-            print("Index error")
-
-        # Place and recover
-        if last_move == "place" and move == "recover":
-            return last_cell != cell
-        # Push and recover
-        if last_move == "place-push" and move == "recover":
-            return last_cell != cell
-
-        return True
+            return True
+        else:
+            return True
 
     def get_action(self, state, last_action, time_left):
         """This function is used to play a move according
@@ -41,7 +41,11 @@ class MyAgent(AlphaBetaAgent):
         It must return an action representing the move the player
         will perform.
         """
-        self.move_nbr += 1
+        if state.turn in [0, 1]:
+            if state.is_empty((0, 1)):
+                return tuple(("place", (0, 1), 0))
+            else:
+                return tuple(("place", (0, 3), 0))
         self.last_action = last_action
         return minimax.search(state, self)
 
@@ -53,7 +57,7 @@ class MyAgent(AlphaBetaAgent):
         actions = state.get_current_player_actions()
         successors = list()
         for action in actions:
-            if state.is_action_valid(action) and self.revert_previous_action(action):
+            if state.is_action_valid(action):  # and self.revert_previous_action(action):
                 new_state = state.copy()
                 new_state.apply_action(action)
                 successors.append((action, new_state))
@@ -71,6 +75,11 @@ class MyAgent(AlphaBetaAgent):
         """The evaluate function must return an integer value
         representing the utility function of the board.
         """
+        if state.game_over():
+            if state.get_winner() == self.id:
+                return float("inf")
+            else:
+                return -1 * float("inf")
         return self.evaluate_engine(self.id, state) - self.evaluate_engine(self.id - 1, state)
 
     def evaluate_engine(self, player_id, state):
@@ -78,30 +87,30 @@ class MyAgent(AlphaBetaAgent):
                 controlled by player where p,f are the position and the exit direction
                 for each rock controlled by player"""
         val = 0
-        compact_str = state.compact_str()
-        if player_id == 0:
-            player = [0, 1, 2, 3]
-        else:
-            player = [4, 5, 6, 7]
-
-        # TODO Condition only works with depth 1
-        if self.move_nbr == 1 and self.current_depth == 1:
-            pos = [1, 3, 23, 21]
-            for i in pos:
-                if compact_str[i] in player:
-                    val += 999
-        if self.move_nbr == 2 and self.current_depth == 1:
-            pos = [1, 3, 23, 21]
-            pos_push = [6, 8, 18, 16]
-            for i in range(len(pos)):
-                if compact_str[pos[i]] in player and compact_str[pos_push[j]] in player:
-                    val += 999
-
-        if self.move_nbr == 3 and self.current_depth == 1:
-            pos = [10, 14]
-            for i in pos:
-                if compact_str[i] in player:
-                    val += 999
+        # TODO
+        # compact_str = state.compact_str()
+        # if player_id == 0:
+        #     player = [0, 1, 2, 3]
+        # else:
+        #     player = [4, 5, 6, 7]
+        #
+        # if self.move_nbr == 1:  # + self.current_depth == 2:
+        #     pos = [1, 3, 23, 21]
+        #     for i in pos:
+        #         if compact_str[i] in player:
+        #             val += 999
+        # if self.move_nbr == 2:  # + self.current_depth == 3:
+        #     pos = [1, 3, 23, 21]
+        #     pos_push = [6, 8, 18, 16]
+        #     for i in range(len(pos)):
+        #         if compact_str[pos[i]] in player and compact_str[pos_push[i]] in player:
+        #             val += 999
+        #
+        # if self.move_nbr == 3:  # + self.current_depth == 4:
+        #     pos = [10, 14]
+        #     for i in pos:
+        #         if compact_str[i] in player:
+        #             val += 999
 
         controlled_rocks = rocks(state, player_id)
         for (x, y), f in controlled_rocks:
@@ -114,6 +123,6 @@ class MyAgent(AlphaBetaAgent):
             elif f == 3:
                 dst = SIZE - y
             else:
-                raise ValueError("face= ", f, RIGHT)
+                raise ValueError("face= ", f)
             val += SIZE - dst
         return val
