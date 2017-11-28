@@ -59,10 +59,10 @@ def static_evaluate(id, state):
         elif f == LEFT:
             dst = y + 1
         elif f == DOWN:
-            dst = SIZE - x
+            dst = 5 - x
         elif f == RIGHT:
-            dst = SIZE - y
+            dst = 5 - y
         else:
             raise ValueError("Wrong face value %s", f)
-        val += SIZE - dst
+        val += 5 - dst
     return val

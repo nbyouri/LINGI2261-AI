@@ -80,6 +80,7 @@ class MyAgent(AlphaBetaAgent):
                 return float("inf")
             else:
                 return -1 * float("inf")
+
         return self.evaluate_engine(self.id, state) - self.evaluate_engine(self.id - 1, state)
 
     def evaluate_engine(self, player_id, state):
