@@ -60,7 +60,7 @@ class MyAgent(AlphaBetaAgent):
             if face == LEFT:
                 for row_index in range(0, cell_j):
                     ptype = state.board_value_pos((cell_i, row_index))
-                    face = state.face[cell_i, row_index]
+                    face = state.face[cell_i][row_index]
                     if ptype == ROCK:
                         weight += 1
                     elif ptype != ROCK and face == RIGHT:
@@ -70,7 +70,7 @@ class MyAgent(AlphaBetaAgent):
             elif face == RIGHT:
                 for row_index in range(cell_j, 4):
                     ptype = state.board_value_pos((cell_i, row_index))
-                    face = state.face[cell_i, row_index]
+                    face = state.face[cell_i][row_index]
                     if ptype == ROCK:
                         weight += 1
                     elif ptype != ROCK and face == LEFT:
@@ -80,7 +80,7 @@ class MyAgent(AlphaBetaAgent):
             elif face == DOWN:
                 for col_index in range(cell_i, 4):
                     ptype = state.board_value_pos((col_index, cell_j))
-                    face = state.face[col_index, cell_j]
+                    face = state.face[col_index][cell_j]
                     if ptype == ROCK:
                         weight += 1
                     elif ptype != ROCK and face == UP:
@@ -90,7 +90,7 @@ class MyAgent(AlphaBetaAgent):
             elif face == UP:
                 for col_index in range(0, cell_i):
                     ptype = state.board_value_pos((col_index, cell_j))
-                    face = state.face[col_index, cell_j]
+                    face = state.face[col_index][cell_j]
                     if ptype == ROCK:
                         weight += 1
                     elif ptype != ROCK and face == DOWN:
@@ -140,8 +140,8 @@ class MyAgent(AlphaBetaAgent):
         successors = list()
         for action in actions:
             if state.is_action_valid(action) and not self.revert_previous_action(action) \
-                                             and not self.powerless_push(state, action)  \
-                                             and not self.dumb_place(action):
+                                             and not self.dumb_place(action) \
+                                             and not self.powerless_push(state, action):
                 new_state = state.copy()
                 new_state.apply_action(action)
                 successors.append((action, new_state))
