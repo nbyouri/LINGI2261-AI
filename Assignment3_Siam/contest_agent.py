@@ -24,14 +24,11 @@ class MyAgent(AlphaBetaAgent):
                 pass
             # Place and recover
             if last_move == "place" and move == "recover":
-                return last_cell != cell
+                return last_cell == cell
             # Push and recover
             if last_move == "place-push" and move == "recover":
-                return last_cell != cell
-
-            return True
-        else:
-            return True
+                return last_cell == cell
+        return False
 
     """
     Avoid doing a place on a block we moved out of the border zone, ignore corners
@@ -53,8 +50,6 @@ class MyAgent(AlphaBetaAgent):
 
     """
     Avoid moving into a position where you can't push
-    TODO, only do if we're not near an outer band cell (no place-push available to help next move)
-    TODO, consider who's closest to the rock -> who might win?
     """
     def powerless_push(self, state, action):
         move = action[0]
@@ -72,7 +67,6 @@ class MyAgent(AlphaBetaAgent):
                         weight += 2
                     elif ptype != ROCK and face == LEFT:
                         weight -= 2
-                " can we actually push "
             elif face == RIGHT:
                 for row_index in range(cell_j, 4):
                     ptype = state.board_value_pos((cell_i, row_index))
@@ -116,7 +110,7 @@ class MyAgent(AlphaBetaAgent):
         optimal_tertiary_positions = [(2, 0), (2, 4)]
         if state.turn in [0, 1]:
             for pos in optimal_initial_positions:
-                if state.isempty(pos):
+                if state.is_empty(pos):
                     return tuple(("place", pos, 0))
 
         " Optimal secondary move "
@@ -129,9 +123,9 @@ class MyAgent(AlphaBetaAgent):
         if state.turn in [5, 6]:
             for i, j in optimal_initial_positions:
                 if state.board_value_pos((i, j)) == PLAYER0:
-                    if j == 1 and state.isempty(optimal_tertiary_positions[0]):
+                    if j == 1 and state.is_empty(optimal_tertiary_positions[0]):
                         return tuple(("place", optimal_tertiary_positions[0], RIGHT))
-                    elif state.isempty(optimal_tertiary_positions[1]):
+                    elif state.is_empty(optimal_tertiary_positions[1]):
                         return tuple(("place", optimal_tertiary_positions[1], LEFT))
 
         self.last_action = last_action
@@ -145,7 +139,9 @@ class MyAgent(AlphaBetaAgent):
         actions = state.get_current_player_actions()
         successors = list()
         for action in actions:
-            if state.is_action_valid(action):  # and self.revert_previous_action(action):
+            if state.is_action_valid(action) and not self.revert_previous_action(action) \
+                                             and not self.powerless_push(state, action)  \
+                                             and not self.dumb_place(action):
                 new_state = state.copy()
                 new_state.apply_action(action)
                 successors.append((action, new_state))
@@ -159,7 +155,7 @@ class MyAgent(AlphaBetaAgent):
         search has to stop; false otherwise.
         """
         self.current_depth = depth
-        return state.game_over() or depth >= 1
+        return state.game_over() or depth >= 2
 
     def evaluate(self, state):
         """The evaluate function must return an integer value
