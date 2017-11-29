@@ -34,13 +34,13 @@ class MyAgent(AlphaBetaAgent):
             return True
 
     """
-    " Avoid doing a place on a block we moved out of the border zone, ignore corners "
+    Avoid doing a place on a block we moved out of the border zone, ignore corners
     """
     def dumb_place(self, action):
         corners = [(0, 0), (0, 4), (4, 0), (4, 4)]
 
         if not self.last_action:
-            return True
+            return False
         else:
             last_move = self.last_action[0]
             if last_move == "move":
@@ -51,6 +51,60 @@ class MyAgent(AlphaBetaAgent):
                     return last_cell_orig == cell
             return False
 
+    """
+    Avoid moving into a position where you can't push
+    TODO, only do if we're not near an outer band cell (no place-push available to help next move)
+    TODO, consider who's closest to the rock -> who might win?
+    """
+    def powerless_push(self, state, action):
+        move = action[0]
+        weight = 0
+        if move == "move":
+            cell_i, cell_j, face = action[2][0], action[2][1], action[3]
+            " Do we need to look vertically or horizontally "
+            if face == LEFT:
+                for row_index in range(0, cell_j):
+                    ptype = state.board_value_pos((cell_i, row_index))
+                    face = state.face[cell_i, row_index]
+                    if ptype == ROCK:
+                        weight += 1
+                    elif ptype != ROCK and face == RIGHT:
+                        weight += 2
+                    elif ptype != ROCK and face == LEFT:
+                        weight -= 2
+                " can we actually push "
+            elif face == RIGHT:
+                for row_index in range(cell_j, 4):
+                    ptype = state.board_value_pos((cell_i, row_index))
+                    face = state.face[cell_i, row_index]
+                    if ptype == ROCK:
+                        weight += 1
+                    elif ptype != ROCK and face == LEFT:
+                        weight += 2
+                    elif ptype != ROCK and face == RIGHT:
+                        weight -= 2
+            elif face == DOWN:
+                for col_index in range(cell_i, 4):
+                    ptype = state.board_value_pos((col_index, cell_j))
+                    face = state.face[col_index, cell_j]
+                    if ptype == ROCK:
+                        weight += 1
+                    elif ptype != ROCK and face == UP:
+                        weight += 2
+                    elif ptype != ROCK and face == DOWN:
+                        weight -= 2
+            elif face == UP:
+                for col_index in range(0, cell_i):
+                    ptype = state.board_value_pos((col_index, cell_j))
+                    face = state.face[col_index, cell_j]
+                    if ptype == ROCK:
+                        weight += 1
+                    elif ptype != ROCK and face == DOWN:
+                        weight += 2
+                    elif ptype != ROCK and face == UP:
+                        weight -= 2
+        return weight > 0
+
     def get_action(self, state, last_action, time_left):
         """This function is used to play a move according
         to the board, player and time left provided as input.
@@ -59,7 +113,7 @@ class MyAgent(AlphaBetaAgent):
         """
         " Optimal initial move "
         optimal_initial_positions = [(0, 1), (0, 3), (4, 1), (4, 3)]
-        optimal_tertiary_positions = [(2,0), (2, 4)]
+        optimal_tertiary_positions = [(2, 0), (2, 4)]
         if state.turn in [0, 1]:
             for pos in optimal_initial_positions:
                 if state.isempty(pos):
