@@ -49,7 +49,7 @@ class MyAgent(AlphaBetaAgent):
                 if move == "place" and last_cell_orig not in corners:
                     cell = action[1]
                     return last_cell_orig == cell
-
+            return False
 
     def get_action(self, state, last_action, time_left):
         """This function is used to play a move according
@@ -58,15 +58,28 @@ class MyAgent(AlphaBetaAgent):
         will perform.
         """
         " Optimal initial move "
+        optimal_initial_positions = [(0, 1), (0, 3), (4, 1), (4, 3)]
+        optimal_tertiary_positions = [(2,0), (2, 4)]
         if state.turn in [0, 1]:
-            if state.is_empty((0, 1)):
-                return tuple(("place", (0, 1), 0))
-            elif state.is_empty((0, 3)):
-                return tuple(("place", (0, 3), 0))
-            elif state.is_empty((4, 1)):
-                return tuple(("place", (4, 1), 0))
-            else:
-                return tuple(("place", (4, 3), 0))
+            for pos in optimal_initial_positions:
+                if state.isempty(pos):
+                    return tuple(("place", pos, 0))
+
+        " Optimal secondary move "
+        if state.turn in [3, 4]:
+            for pos in optimal_initial_positions:
+                if state.board_value_pos(pos) == PLAYER0:
+                    return tuple(("place-push", pos, DOWN if pos[0] == 0 else UP))
+
+        " Optimal tertiary move "
+        if state.turn in [5, 6]:
+            for i, j in optimal_initial_positions:
+                if state.board_value_pos((i, j)) == PLAYER0:
+                    if j == 1 and state.isempty(optimal_tertiary_positions[0]):
+                        return tuple(("place", optimal_tertiary_positions[0], RIGHT))
+                    elif state.isempty(optimal_tertiary_positions[1]):
+                        return tuple(("place", optimal_tertiary_positions[1], LEFT))
+
         self.last_action = last_action
         return minimax.search(state, self)
 
