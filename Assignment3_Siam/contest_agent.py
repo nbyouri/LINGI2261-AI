@@ -1,11 +1,13 @@
 from agent import AlphaBetaAgent
 import minimax
-from state_tools_basic import rocks
+# from state_tools_basic import rocks
 from constants import *
 from siam import *
-
+import db
 
 class MyAgent(AlphaBetaAgent):
+    hit = 0.0
+    rate = 0.0
     def get_name(self):
         return "super_IA_pas_dutout_faite_le_29_novembre"
 
@@ -108,29 +110,28 @@ class MyAgent(AlphaBetaAgent):
         will perform.
         """
         " Optimal initial move "
-        optimal_initial_positions = [(0, 1), (0, 3), (4, 1), (4, 3)]
-        optimal_tertiary_positions = [(2, 0), (2, 4)]
-        if state.turn in [0, 1]:
-            for pos in optimal_initial_positions:
-                if state.is_empty(pos):
-                    return tuple(("place", pos, DOWN if pos[0] == 0 else UP))
+        # optimal_initial_positions = [(0, 1), (0, 3), (4, 1), (4, 3)]
+        # optimal_tertiary_positions = [(2, 0), (2, 4)]
+        # if state.turn in [0, 1]:
+        #     for pos in optimal_initial_positions:
+        #         if state.is_empty(pos):
+        #             return tuple(("place", pos, DOWN if pos[0] == 0 else UP))
+        #
+        # " Optimal secondary move "
+        # if state.turn in [2, 3]:
+        #     for pos in optimal_initial_positions:
+        #         if state.board_value_pos(pos) == self.id:
+        #             return tuple(("place-push", pos, DOWN if pos[0] == 0 else UP))
+        #
+        # " Optimal tertiary move "
+        # if state.turn in [4, 5]:
+        #     for i, j in optimal_initial_positions:
+        #         if state.board_value_pos((i, j)) == self.id:
+        #             if j == 1 and state.is_empty(optimal_tertiary_positions[0]):
+        #                 return tuple(("place", optimal_tertiary_positions[0], RIGHT))
+        #             elif state.is_empty(optimal_tertiary_positions[1]):
+        #                 return tuple(("place", optimal_tertiary_positions[1], LEFT))
 
-        " Optimal secondary move "
-        if state.turn in [2, 3]:
-            for pos in optimal_initial_positions:
-                if state.board_value_pos(pos) == self.id:
-                    return tuple(("place-push", pos, DOWN if pos[0] == 0 else UP))
-
-        " Optimal tertiary move "
-        if state.turn in [4, 5]:
-            for i, j in optimal_initial_positions:
-                if state.board_value_pos((i, j)) == self.id:
-                    if j == 1 and state.is_empty(optimal_tertiary_positions[0]):
-                        return tuple(("place", optimal_tertiary_positions[0], RIGHT))
-                    elif state.is_empty(optimal_tertiary_positions[1]):
-                        return tuple(("place", optimal_tertiary_positions[1], LEFT))
-
-        # new_state = ContestSiamState(state)
         return minimax.search(state, self)
 
     def successors(self, state):
@@ -148,11 +149,11 @@ class MyAgent(AlphaBetaAgent):
                     and not self.powerless_push(state, action):
                 new_state = state.copy()
                 new_state.apply_action(action)
-                successors.append((action, new_state))
+                if new_state.compact_str() in db.database:
+                    successors.append((action, new_state))
         " Sort the tree to allow better pruning "
-        # TODO put yield in the for loop
         successors = sorted(successors, key=self.cmp_successors)
-        for s in successors:
+        for s in sorted(successors, reverse=True, key=self.cmp_successors):
             yield s
 
     def cmp_successors(self, elem):
@@ -174,10 +175,32 @@ class MyAgent(AlphaBetaAgent):
                 return float("inf")
             else:
                 return -1 * float("inf")
+        eval = self.evaluate_db(state)
+        if eval:
+            return eval
 
-        return self.evaluate_engine(self.id, state) - self.evaluate_engine(self.id - 1, state)
+        return self.evaluate_rocks(self.id, state) - self.evaluate_rocks(self.id - 1, state) + self.evaluate_token_nbr(state)
 
-    def evaluate_engine(self, player_id, state):
+    def evaluate_db(self, state):
+        compact_str = state.compact_str()
+
+        if db.database.__contains__(compact_str):
+            if self.id == 0:
+                return db.database[compact_str][0] / db.database[compact_str][1]
+            elif self.id == 1:
+                return -1*db.database[compact_str][0] / db.database[compact_str][1]
+        else:
+            return None
+
+
+    def evaluate_token_nbr(self, state):
+        if not state.reserve[self.id] == 0:
+            return 2
+        return 0
+
+
+
+    def evaluate_rocks(self, player_id, state):
         """The val function is the sum of (5 - # moves from p in direction f to exit) for each rock
                 controlled by player where p,f are the position and the exit direction
                 for each rock controlled by player"""
@@ -244,4 +267,59 @@ class ContestSiamState(SiamState):
     def apply_action(self, action, go_to_next_player=True):
         self.last_action[self.cur_player] = action
         super().apply_action()
+
+
+from siam import *
+
+"""
+A player is said to control a push or place-push if he is the closest
+facing the rock (in other words, if the rock went out of the board that
+player would win the game).
+
+Given a state and a player compute, for each push or place-push action
+controlled by that player, distance between those rocks and the board
+of the game.
+"""
+
+
+def rocks(state, player):
+    rocks = []
+    push_value = 0
+    # get the player action
+    actions = state.get_player_actions(player)
+    # loop to find push or place-push actions
+    for action in actions:
+        if action[0] == 'push' or action[0] == 'place-push':
+            # push or place-push found
+            # get the position
+            position = action[1]
+            # get the face
+            face = state.face_value_pos(position)
+            if action[0] == 'place-push':
+                # for a place-push the face is given in the action
+                face = action[2]
+            direction = DIR[face]
+            # initialize the position of the last rock found
+            last_rock = None
+            # initialize the player closest to the rock
+            last_piece_facing_rock = player
+            while state.in_bounds_pos(position) and state.board_value_pos(position) != EMPTY:
+                board_value = state.board_value_pos(position)
+                if board_value == ROCK:
+                    # we found a rock
+                    last_rock = position
+                elif state.face_value_pos(position) == face:
+                    # we found a piece facing the rock
+                    last_piece_facing_rock = board_value
+                position = (position[0] + direction[0], position[1] + direction[1])
+            if last_rock != None and last_piece_facing_rock == player:
+                # we found a rock and player if the closest facing the rock
+                # compute the distance between the rock and the distance
+                rocks.append((last_rock, face))
+    return rocks
+
+
+"""
+Database of 18 games of siam
+"""
 
