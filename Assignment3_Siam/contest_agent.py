@@ -2,21 +2,20 @@ from agent import AlphaBetaAgent
 import minimax
 from state_tools_basic import rocks
 from constants import *
+from siam import *
 
 
 class MyAgent(AlphaBetaAgent):
-    current_depth = 0
-    last_action = None
-
     def get_name(self):
         return "super_IA_pas_dutout_faite_le_29_novembre"
 
-    def revert_previous_action(self, action):
-        if self.last_action:
-            last_move, move = self.last_action[0], action[0]
-            last_cell, cell = self.last_action[1], action[1]
+    def revert_previous_action(self, state, action):
+        last_action = state.last_action[self.id]
+        if last_action:
+            last_move, move = last_action[0], action[0]
+            last_cell, cell = last_action[1], action[1]
             try:
-                last_face, face = self.last_action[2], action[2]
+                last_face, face = last_action[2], action[2]
                 # Avoid reverting rotation
                 if last_move == "face" and move == "face":
                     return last_cell != cell or last_face != face
@@ -33,15 +32,17 @@ class MyAgent(AlphaBetaAgent):
     """
     Avoid doing a place on a block we moved out of the border zone, ignore corners
     """
-    def dumb_place(self, action):
-        corners = [(0, 0), (0, 4), (4, 0), (4, 4)]
 
-        if not self.last_action:
+    def dumb_place(self, state, action):
+        corners = [(0, 0), (0, 4), (4, 0), (4, 4)]
+        last_action = state.last_action[self.id]
+
+        if not last_action:
             return False
         else:
-            last_move = self.last_action[0]
+            last_move = last_action[0]
             if last_move == "move":
-                last_cell_orig = self.last_action[1]
+                last_cell_orig = last_action[1]
                 move = action[0]
                 if move == "place" and last_cell_orig not in corners:
                     cell = action[1]
@@ -51,6 +52,7 @@ class MyAgent(AlphaBetaAgent):
     """
     Avoid moving into a position where you can't push
     """
+
     def powerless_push(self, state, action):
         move = action[0]
         weight = 0
@@ -111,24 +113,24 @@ class MyAgent(AlphaBetaAgent):
         if state.turn in [0, 1]:
             for pos in optimal_initial_positions:
                 if state.is_empty(pos):
-                    return tuple(("place", pos, 0))
+                    return tuple(("place", pos, DOWN if pos[0] == 0 else UP))
 
         " Optimal secondary move "
-        if state.turn in [3, 4]:
+        if state.turn in [2, 3]:
             for pos in optimal_initial_positions:
-                if state.board_value_pos(pos) == PLAYER0:
+                if state.board_value_pos(pos) == self.id:
                     return tuple(("place-push", pos, DOWN if pos[0] == 0 else UP))
 
         " Optimal tertiary move "
-        if state.turn in [5, 6]:
+        if state.turn in [4, 5]:
             for i, j in optimal_initial_positions:
-                if state.board_value_pos((i, j)) == PLAYER0:
+                if state.board_value_pos((i, j)) == self.id:
                     if j == 1 and state.is_empty(optimal_tertiary_positions[0]):
                         return tuple(("place", optimal_tertiary_positions[0], RIGHT))
                     elif state.is_empty(optimal_tertiary_positions[1]):
                         return tuple(("place", optimal_tertiary_positions[1], LEFT))
 
-        self.last_action = last_action
+        # new_state = ContestSiamState(state)
         return minimax.search(state, self)
 
     def successors(self, state):
@@ -136,25 +138,31 @@ class MyAgent(AlphaBetaAgent):
         pairs (a, s) in which a is the action played to reach the
         state s;
         """
+
+        state = ContestSiamState(state)
         actions = state.get_current_player_actions()
         successors = list()
         for action in actions:
-            if state.is_action_valid(action) and not self.revert_previous_action(action) \
-                                             and not self.dumb_place(action) \
-                                             and not self.powerless_push(state, action):
+            if state.is_action_valid(action) and not self.revert_previous_action(state, action) \
+                    and not self.dumb_place(state, action) \
+                    and not self.powerless_push(state, action):
                 new_state = state.copy()
                 new_state.apply_action(action)
                 successors.append((action, new_state))
         " Sort the tree to allow better pruning "
-        successors.sort()
+        # TODO put yield in the for loop
+        successors = sorted(successors, key=self.cmp_successors)
         for s in successors:
             yield s
+
+    def cmp_successors(self, elem):
+        elem = elem
+        return self.evaluate(elem[1])
 
     def cutoff(self, state, depth):
         """The cutoff function returns true if the alpha-beta/mini max
         search has to stop; false otherwise.
         """
-        self.current_depth = depth
         return state.game_over() or depth >= 2
 
     def evaluate(self, state):
@@ -213,3 +221,27 @@ class MyAgent(AlphaBetaAgent):
                 raise ValueError("face= ", f)
             val += SIZE - dst
         return val
+
+
+"""
+    Implementation of siam state
+"""
+
+
+class ContestSiamState(SiamState):
+    def __init__(self, state):
+        self.nb_rows = state.nb_rows
+        self.nb_cols = state.nb_cols
+        self.reserve = state.reserve
+        self.board = state.board
+        self.face = state.face
+        self.winner = state.winner
+        self.cur_player = state.cur_player
+        self.turn = state.turn
+        self.hashcode = state.hashcode
+        self.last_action = [None, None]
+
+    def apply_action(self, action, go_to_next_player=True):
+        self.last_action[self.cur_player] = action
+        super().apply_action()
+
