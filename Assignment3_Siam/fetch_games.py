@@ -51,11 +51,12 @@ def parse_html(id):
                 elif img == ELE_RIGHT:
                     game_str += "7"
 
+        winner = -1 if (nb_games & 1) == 0 else 1
         if game_str in database:
-            database[game_str][0] += (nb_games - i + 1) / nb_games
+            database[game_str][0] += winner * (nb_games - i + 1) / nb_games
             database[game_str][1] += 1
         else:
-            database[game_str] = [(nb_games - i + 1) / nb_games, 1]
+            database[game_str] = [winner * ((nb_games - i + 1) / nb_games), 1]
 
 
 for i in range(2, 18002):
@@ -64,7 +65,7 @@ for i in range(2, 18002):
 f = open('db.txt', 'w')
 
 f.write("database = {\n")
-for k,v in database.items():
+for k, v in database.items():
     f.write("\t\"%s\" : %s,\n" % (k, v))
 f.write("}\n")
 f.close()
