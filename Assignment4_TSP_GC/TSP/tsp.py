@@ -37,23 +37,25 @@ class TSP(Problem):
         # Greedy initial solution
         cur_city = 0
         self.initial = [0]
-        while len(self.initial) < self.n:
-            cost = min(x for i, x in enumerate(self.dist[cur_city]) if i not in self.initial)
+        free_list = [i for i in range(1, self.n)]
+        while free_list:
+            cost = min(x for i, x in enumerate(self.dist[cur_city]) if i in free_list)
             cur_city = self.dist[cur_city].index(cost)
+            free_list.remove(cur_city)
             self.initial.append(cur_city)
 
     def successor(self, state):
         """
-        For successor(self, state) function, you should return a list of (act, succ) 
-        where the state succ is obtained by apply the action act, in this case, act = (i, j) 
-        consists in applying 2-opt swap on the two edges (state[i-1], state[i]) and  (state[j], state[j+1]). 
+        For successor(self, state) function, you should return a list of (act, succ)
+        where the state succ is obtained by apply the action act, in this case, act = (i, j)
+        consists in applying 2-opt swap on the two edges (state[i-1], state[i]) and  (state[j], state[j+1]).
         (state here is an ordered sequence of visited cities)
 
         For example, consider the following state:
         state = [7, 2, 1, 5, 4, 3, 0, 6]
         One possible successor of this state could be ((1,5), succ), with:
         succ = [7, 3, 4, 5, 1, 2, 0, 6]
-        Since act = (1, 5), it means that the two edges (7, 2) and (3,0) have been swapped in succ. 
+        Since act = (1, 5), it means that the two edges (7, 2) and (3,0) have been swapped in succ.
         You should try to visualize this example, it will be more easier to see.
         You should reverse path between index i and index j to preserve other edges.
         """
