@@ -57,7 +57,13 @@ class TSP(Problem):
         You should try to visualize this example, it will be more easier to see.
         You should reverse path between index i and index j to preserve other edges.
         """
-        pass
+        succ = []
+        for i in range(len(state)):
+            for j in range(i + 1, len(state)):
+                r = list(reversed(state[i:j+1]))
+                succ.append(((i, j), state[:i] + r + state[j+1:]))
+        for s in succ:
+            yield s
 
     def value(self, state):
         """
@@ -110,7 +116,7 @@ if __name__ == '__main__':
     print(output_data)
 
     # random walk
-    # node = random_walk(tsp, 100)
-    # output_data = '%.2f' % node.value() + '\n'
-    # output_data += ' '.join(map(str, node.state)) + '\n'
-    # print(output_data)
+    node = random_walk(tsp, 100)
+    output_data = '%.2f' % node.value() + '\n'
+    output_data += ' '.join(map(str, node.state)) + '\n'
+    print(output_data)
