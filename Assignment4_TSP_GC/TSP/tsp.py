@@ -109,14 +109,26 @@ if __name__ == '__main__':
     node = maxvalue(tsp, 100)
 
     # prepare output data to printout
+    print('Initial')
     output_data = '%.2f' % tsp.value(tsp.initial) + '\n'
     output_data += ' '.join(map(str, tsp.initial)) + '\n'
-    output_data += "%.2f" % node.value() + '\n'
+    print(output_data)
+
+    print('maxvalue')
+    output_data = "%.2f" % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
 
     # random walk
+    print('Random Walk')
     node = random_walk(tsp, 100)
+    output_data = '%.2f' % node.value() + '\n'
+    output_data += ' '.join(map(str, node.state)) + '\n'
+    print(output_data)
+
+    # simulated annealing
+    print('Simulated Annealing')
+    node = simulated_annealing(tsp)
     output_data = '%.2f' % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
