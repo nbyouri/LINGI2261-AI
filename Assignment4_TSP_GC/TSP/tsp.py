@@ -124,7 +124,7 @@ if __name__ == '__main__':
         exit(1)
 
     tsp = TSP(sys.argv[1])
-    node = randomized_maxvalue(tsp, 100)
+    node = maxvalue(tsp, 100)
 
     output_data = '%.2f' % tsp.value(tsp.initial) + '\n'
     output_data += ' '.join(map(str, tsp.initial)) + '\n'
