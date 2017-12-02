@@ -5,9 +5,7 @@
 #
 ################################################################################
 from search import *
-import re
 import sys
-import os
 
 
 #################
@@ -36,9 +34,13 @@ class TSP(Problem):
                 dist_.append(dist(self.cities[i], self.cities[j]))
             self.dist.append(dist_)
 
-        # Dummy initial solution. Change it to build your initial solution.
-        self.initial = list(range(self.n))
-
+        # Greedy initial solution
+        cur_city = 0
+        self.initial = [0]
+        while len(self.initial) < self.n:
+            cost = min(i for i in self.dist[cur_city] if i != 0)
+            cur_city = self.dist[cur_city].index(cost)
+            self.initial.append(cur_city)
 
     def successor(self, state):
         """
@@ -55,22 +57,24 @@ class TSP(Problem):
         You should try to visualize this example, it will be more easier to see.
         You should reverse path between index i and index j to preserve other edges.
         """
-        
         pass
-
 
     def value(self, state):
         """
         The value function must return an integer value
         representing the length of TSP route.
         """
-
-        return 0
-
+        val = 0
+        for i in range(len(state) - 1):
+            val += self.dist[state[i]][state[i + 1]]
+        val += self.dist[state[0]][state[-1]]
+        return val
 
 #################
 # Local Search #
 #################
+
+
 def maxvalue(problem, limit=100, callback=None):
     current = LSNode(problem, problem.initial, 0)
     best = current
