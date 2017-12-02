@@ -36,12 +36,17 @@ class TSP(Problem):
 
         # Greedy initial solution
         cur_city = 0
-        self.initial = [0]
+        self.initial = [cur_city]
         free_list = [i for i in range(1, self.n)]
         while free_list:
-            cost = min(x for i, x in enumerate(self.dist[cur_city]) if i in free_list)
-            cur_city = self.dist[cur_city].index(cost)
-            free_list.remove(cur_city)
+            cost = min([self.dist[cur_city][i] for i in free_list])
+            # Make sure to try to delete the right node if cost matches multiple indices
+            indices = [i for i, x in enumerate(self.dist[cur_city]) if x == cost]
+            for i in indices:
+                if i in free_list:
+                    cur_city = i
+                    free_list.remove(i)
+                    break
             self.initial.append(cur_city)
 
     def successor(self, state):
@@ -96,7 +101,7 @@ def maxvalue(problem, limit=100, callback=None):
 
 def randomized_maxvalue(problem, limit=100, callback=None):
     # use this line to submit on INGInious
-    # random.seed(12)
+    random.seed(12)
     current = LSNode(problem, problem.initial, 0)
     for step in range(limit):
         if callback is not None:
@@ -113,36 +118,10 @@ if __name__ == '__main__':
         exit(1)
 
     tsp = TSP(sys.argv[1])
-    node = maxvalue(tsp, 100)
+    node = randomized_maxvalue(tsp, 100)
 
-    # prepare output data to printout
-    print('Initial')
     output_data = '%.2f' % tsp.value(tsp.initial) + '\n'
     output_data += ' '.join(map(str, tsp.initial)) + '\n'
-    print(output_data)
-
-    print('maxvalue')
-    output_data = "%.2f" % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    #randomized_maxvalue
-    print('randomized_maxvalue')
-    node = randomized_maxvalue(tsp, 100)
-    output_data = "%.2f" % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    # random walk
-    print('Random Walk')
-    node = random_walk(tsp, 100)
-    output_data = '%.2f' % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    # simulated annealing
-    print('Simulated Annealing')
-    node = simulated_annealing(tsp)
-    output_data = '%.2f' % node.value() + '\n'
+    output_data += "%.2f" % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
