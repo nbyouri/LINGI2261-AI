@@ -96,11 +96,13 @@ def randomized_maxvalue(problem, limit=100, callback=None):
     # use this line to submit on INGInious
     # random.seed(12)
     current = LSNode(problem, problem.initial, 0)
-    best = current
-    # Put your code here!
-
-
-    return best
+    for step in range(limit):
+        if callback is not None:
+            callback(current)
+        successors = current.expand()
+        successors = sorted(successors, key=lambda x: x.problem.value(x.state))
+        current = random.choice(successors[0:5])
+    return current
 
 
 if __name__ == '__main__':
@@ -118,6 +120,13 @@ if __name__ == '__main__':
     print(output_data)
 
     print('maxvalue')
+    output_data = "%.2f" % node.value() + '\n'
+    output_data += ' '.join(map(str, node.state)) + '\n'
+    print(output_data)
+
+    #randomized_maxvalue
+    print('randomized_maxvalue')
+    node = randomized_maxvalue(tsp, 100)
     output_data = "%.2f" % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
