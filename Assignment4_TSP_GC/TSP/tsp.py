@@ -83,10 +83,13 @@ class TSP(Problem):
 
 def maxvalue(problem, limit=100, callback=None):
     current = LSNode(problem, problem.initial, 0)
-    best = current
-    # Put your code here!
 
-    return best
+    for step in range(limit):
+        if callback is not None:
+            callback(current)
+        successors = current.expand()
+        current = min(successors, key=lambda x: x.problem.value(x.state))
+    return current
 
 
 def randomized_maxvalue(problem, limit=100, callback=None):
