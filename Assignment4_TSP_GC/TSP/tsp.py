@@ -83,26 +83,32 @@ class TSP(Problem):
 
 def maxvalue(problem, limit=100, callback=None):
     current = LSNode(problem, problem.initial, 0)
+    best = current
 
     for step in range(limit):
         if callback is not None:
             callback(current)
         successors = current.expand()
         current = min(successors, key=lambda x: x.problem.value(x.state))
-    return current
+        if current.value() < best.value():
+            best = current
+    return best
 
 
 def randomized_maxvalue(problem, limit=100, callback=None):
     # use this line to submit on INGInious
-    # random.seed(12)
+    random.seed(12)
     current = LSNode(problem, problem.initial, 0)
+    best = current
     for step in range(limit):
         if callback is not None:
             callback(current)
         successors = current.expand()
         successors = sorted(successors, key=lambda x: x.problem.value(x.state))
         current = random.choice(successors[0:5])
-    return current
+        if current.value() < best.value():
+            best = current
+    return best
 
 
 if __name__ == '__main__':
@@ -111,36 +117,10 @@ if __name__ == '__main__':
         exit(1)
 
     tsp = TSP(sys.argv[1])
-    node = maxvalue(tsp, 100)
+    node = randomized_maxvalue(tsp, 100)
 
-    # prepare output data to printout
-    print('Initial')
     output_data = '%.2f' % tsp.value(tsp.initial) + '\n'
     output_data += ' '.join(map(str, tsp.initial)) + '\n'
-    print(output_data)
-
-    print('maxvalue')
-    output_data = "%.2f" % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    #randomized_maxvalue
-    print('randomized_maxvalue')
-    node = randomized_maxvalue(tsp, 100)
-    output_data = "%.2f" % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    # random walk
-    print('Random Walk')
-    node = random_walk(tsp, 100)
-    output_data = '%.2f' % node.value() + '\n'
-    output_data += ' '.join(map(str, node.state)) + '\n'
-    print(output_data)
-
-    # simulated annealing
-    print('Simulated Annealing')
-    node = simulated_annealing(tsp)
-    output_data = '%.2f' % node.value() + '\n'
+    output_data += "%.2f" % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
