@@ -38,7 +38,7 @@ class TSP(Problem):
         cur_city = 0
         self.initial = [0]
         while len(self.initial) < self.n:
-            cost = min(i for i in self.dist[cur_city] if i != 0)
+            cost = min(x for i, x in enumerate(self.dist[cur_city]) if i not in self.initial)
             cur_city = self.dist[cur_city].index(cost)
             self.initial.append(cur_city)
 
@@ -108,3 +108,9 @@ if __name__ == '__main__':
     output_data += "%.2f" % node.value() + '\n'
     output_data += ' '.join(map(str, node.state)) + '\n'
     print(output_data)
+
+    # random walk
+    # node = random_walk(tsp, 100)
+    # output_data = '%.2f' % node.value() + '\n'
+    # output_data += ' '.join(map(str, node.state)) + '\n'
+    # print(output_data)
