@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import graph
-
+from itertools import combinations
 
 def get_clauses(G, k):
     """Append all clauses needed to find a correct solution for the graph coloring problem
@@ -21,6 +21,33 @@ def get_clauses(G, k):
     """
 
     clauses = []
-    # Put your code here!
+
+    def index(node, color):
+        return (node - 1) * k + color
+
+    def colors():
+        return range(1, k + 1)
+
+    def nodes():
+        return range(1, G.nb_nodes + 1)
+
+    # Start by making sure every node has only one color
+    for node in nodes():
+        no_dup_color_clause = ()
+        for color in colors():
+            no_dup_color_clause += (index(node, color),)
+        clauses.append(no_dup_color_clause)
+
+        for color_couple in combinations(colors(), 2):
+            clauses.append((-index(node, color_couple[0]),
+                            -index(node, color_couple[1])))
+
+    # Then make sure neighbours don't have the same colors
+    neighbour_clauses = []
+    for edge in G.edges:
+        for color in colors():
+            neighbour_clauses.append((-index(edge[0], color),
+                                      -index(edge[1], color)))
+    clauses.extend(neighbour_clauses)
 
     return clauses
