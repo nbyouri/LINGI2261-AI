@@ -33,13 +33,11 @@ def get_clauses(G, k):
         clauses.append(tuple(index(node, color) for color in colors()))
 
         for color_couple in combinations(colors(), 2):
-            clauses.append((-index(node, color_couple[0]),
-                            -index(node, color_couple[1])))
+            clauses.append(tuple(-index(node, color) for color in color_couple))
 
     # Then make sure neighbours don't have the same colors
     for edge in G.edges:
         for color in colors():
-            clauses.append((-index(edge[0], color),
-                            -index(edge[1], color)))
+            clauses.append(tuple(-index(node, color) for node in edge))
 
     return clauses
