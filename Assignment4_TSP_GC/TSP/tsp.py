@@ -40,13 +40,8 @@ class TSP(Problem):
         free_list = [i for i in range(1, self.n)]
         while free_list:
             cost = min([self.dist[cur_city][i] for i in free_list])
-            # Make sure to try to delete the right node if cost matches multiple indices
-            indices = [i for i, x in enumerate(self.dist[cur_city]) if x == cost]
-            for i in indices:
-                if i in free_list:
-                    cur_city = i
-                    free_list.remove(i)
-                    break
+            cur_city = [i for i in [i for i, x in enumerate(self.dist[cur_city]) if x == cost] if i in free_list][0]
+            free_list.remove(cur_city)
             self.initial.append(cur_city)
 
     def successor(self, state):
@@ -67,10 +62,8 @@ class TSP(Problem):
         succ = []
         for i in range(len(state)):
             for j in range(i + 1, len(state)):
-                r = list(reversed(state[i:j+1]))
-                succ.append(((i, j), state[:i] + r + state[j+1:]))
-        for s in succ:
-            yield s
+                succ.append(((i, j), state[:i] + list(reversed(state[i:j+1])) + state[j+1:]))
+        return succ
 
     def value(self, state):
         """
@@ -124,7 +117,7 @@ if __name__ == '__main__':
         exit(1)
 
     tsp = TSP(sys.argv[1])
-    node = maxvalue(tsp, 100)
+    node = randomized_maxvalue(tsp, 100)
 
     output_data = '%.2f' % tsp.value(tsp.initial) + '\n'
     output_data += ' '.join(map(str, tsp.initial)) + '\n'
